@@ -1,0 +1,16 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "URLCache",
+        "repositoryURL": "https://github.com/dknvmlhok/URLCache",
+        "state": {
+          "branch": "develop",
+          "revision": "a731de97cd6fc78a14e3953f13513fade08480a4",
+          "version": null
+        }
+      }
+    ]
+  },
+  "version": 1
+}
