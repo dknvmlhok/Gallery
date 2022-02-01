@@ -43,50 +43,50 @@ private extension HomeViewModel {
 
     func setupBindings() {
         loadData
-            .sink { [weak self] _ in
-                guard let self = self else { return }
-
-                self.homeService.mediumPhotos
-                    .receive(on: DispatchQueue.main)
-                    .sink(
-                        receiveCompletion: { completion in
-                            guard case .failure(let error) = completion else { return }
-
-                            self.showErrorAlert = true
-                            print("🚨 \(error.errorDescription)")
-                        },
-                        receiveValue: { response in
-                            self.showErrorAlert = false
-                            self.showCacheAlert = false
-                            self.state = .loaded(response)
-                        }
-                    )
-                    .store(in: &self.cancellables)
+            .flatMap { [weak self] _ -> AnyPublisher<[FetchedDataResponse], HomeServiceError> in
+                guard let self = self else {
+                    return Fail(error: HomeServiceError.selfIsNil)
+                        .eraseToAnyPublisher()
+                }
+                return self.homeService.mediumPhotos
             }
-            .store(in: &cancellables)
-
-        clearCache
+            .receive(on: DispatchQueue.main)
             .sink(
-                receiveValue: { [weak self] _ in
-                    guard let self = self else { return }
+                receiveCompletion: { completion in
+                    guard case .failure(let error) = completion else { return }
 
-                    self.homeService.clearCache()
-                        .receive(on: DispatchQueue.main)
-                        .sink(
-                            receiveCompletion: { completion in
-                                guard case .failure(let error) = completion else { return }
-
-                                self.showErrorAlert = true
-                                print("🚨 \(error.errorDescription)")
-                            },
-                            receiveValue: { _ in
-                                self.showErrorAlert = false
-                                self.showCacheAlert = true
-                            }
-                        )
-                        .store(in: &self.cancellables)
+                    self.showErrorAlert = true
+                    print("🚨 \(error.errorDescription)")
+                },
+                receiveValue: { response in
+                    self.showErrorAlert = false
+                    self.showCacheAlert = false
+                    self.state = .loaded(response)
                 }
             )
-            .store(in: &cancellables)
+            .store(in: &self.cancellables)
+
+        clearCache
+            .flatMap { [weak self] _ -> AnyPublisher<Void, HomeServiceError> in
+                guard let self = self else {
+                    return Fail(error: HomeServiceError.selfIsNil)
+                        .eraseToAnyPublisher()
+                }
+                return self.homeService.clearCache()
+            }
+            .receive(on: DispatchQueue.main)
+            .sink(
+                receiveCompletion: { completion in
+                    guard case .failure(let error) = completion else { return }
+
+                    self.showErrorAlert = true
+                    print("🚨 \(error.errorDescription)")
+                },
+                receiveValue: { _ in
+                    self.showErrorAlert = false
+                    self.showCacheAlert = true
+                }
+            )
+            .store(in: &self.cancellables)
     }
 }
